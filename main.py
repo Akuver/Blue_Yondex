@@ -1,8 +1,18 @@
 from math import sqrt
+import random
 from read import demands, warehouses, drones, noflyzones, items, chargingstations, M, C
 from read import Demand, Warehouse, Drone, NoFlyZone, Item, ChargingStation
-
+stop_for_delivery = 3
+stop_for_pickup = 3
 deliveries = []
+
+
+def random_demands(len):
+    randomlist = []
+    for i in range(0, len):
+        n = random.randint(0, len(demands)-1)
+        randomlist.append(n)
+    return randomlist
 
 
 def possible(demand, drone):
@@ -13,6 +23,7 @@ def possible(demand, drone):
     time_taken = time(drone.x, drone.y, drone.z,
                       demand.x, demand.y, demand.z,  drone.P*(drone.capacity/drone.fullcapacity), drone.Q*(drone.capacity/drone.fullcapacity))
     energy_consumed = battery_consumed(drone.ID, time_taken, 1)
+    time_taken += stop_for_pickup
     minimum = 1e18
     warehouseID = -1
     for warehouse in warehouses:
@@ -21,6 +32,7 @@ def possible(demand, drone):
                            warehouse.x, warehouse.y, warehouse.z, drone.P*(drone.capacity/drone.fullcapacity), drone.Q*(drone.capacity/drone.fullcapacity))
             warehouseID = warehouse.ID
     energy_consumed += battery_consumed(drone.ID, minimum, 1)
+    minimum += stop_for_delivery
     # print(time_taken+minimum, energy_consumed)
     if(energy_consumed <= drone.battery and drone.availabletime <= demand.startTime and drone.capacity <= drone.fullcapacity and drone.capacityvol <= drone.fullcapacityvol):
         drone.set_battery(drone.battery-energy_consumed)
@@ -63,16 +75,58 @@ def battery_consumed(droneID, time, is_ascending):
     return energy
 
 
-for demand in demands:
-    for drone in drones:
-        if(possible(demand, drone)):
-            print("Demand->", demand.ID, "Drone->", drone.ID)
-            break
+def check_demands(dems, drone):
+    total_capacity_w = 0
+    total_capacity_vol = 0
+    max_height = 0
+    paths = {}
 
-drone_cnt = 0
-total_cost = 0
+    for d in dems:
+        dem = demands[d]
+        item = items[dem.Item-1]
+        total_capacity_w += item.weight
+        total_capacity_vol += item.L*item.B*item.H
+        max_height = max(max_height, item.H)
+        if(total_capacity_w > drone.fullcapacity or total_capacity_vol > drone.fullcapacityvol):
+            return False
+    # set values for drone
+    drone.set_capacity(total_capacity_w)
+    drone.set_capacityvol(total_capacity_vol)
+    drone.set_z(max_height)
+    for d in dems:
+        time_taken = time(drone.x, drone.y, drone.z,
+                          demands[d].x, demands[d].y, demands[d].z, drone.P*(drone.capacity/drone.fullcapacity), drone.Q*(drone.capacity/drone.fullcapacity))
+        paths[d] = {time_taken,
+                    battery_consumed(drone.ID, time_taken, 1)}
+
+    # unset values in case of failure
+
+    return True
+
+
+# ALGORITHM 1
+# for demand in demands:
+#     for drone in drones:
+#         if(possible(demand, drone)):
+#             print("Demand->", demand.ID, "Drone->", drone.ID)
+#             break
+
+# drone_cnt = 0
+# total_cost = 0
+# for drone in drones:
+#     total_cost += drone.fixedcost+drone.variablecost * \
+#         (drone.flighttime/3600)+(drone.chargetime/3600)*C
+#     drone_cnt += drone.used
+# print(drone_cnt, total_cost)
+
+
 for drone in drones:
-    total_cost += drone.fixedcost+drone.variablecost * \
-        (drone.flighttime/3600)+(drone.chargetime/3600)*C
-    drone_cnt += drone.used
-print(drone_cnt, total_cost)
+    select_slots = min(drone.slots, 4)
+    while(select_slots):
+        found = 0
+        for i in range(100):
+            try_demands = random_demands(select_slots)
+            check_demands(try_demands, drone)
+        if(found):
+            break
+        select_slots -= 1

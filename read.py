@@ -190,12 +190,19 @@ class Demand:
         self.Day = Day
         self.Item = ItemID
         self.WarehouseID = WarehouseID
+        self.completed = 0
         self.x = x
         self.y = y
         self.z = z
         self.startTime = convert_to_seconds(startTime)
         self.endTime = convert_to_seconds(endTime)
         self.fail = fail
+
+    def set_completed(self, completed):
+        self.completed = completed
+
+    def is_completed(self):
+        return self.completed
 
     def __str__(self):
         summary = []
@@ -222,6 +229,7 @@ class Warehouse:
         self.z = 0
         self.current = 0
         self.slots = 0
+        self.slottimes = []
 
     def set_x(self, x):
         self.x = x
@@ -234,13 +242,15 @@ class Warehouse:
 
     def set_slots(self, slots):
         self.slots = slots
+        self.slottimes = [0]*self.slots
 
     def set_current(self, current):
         self.current = current
 
-    def freeSlot(self):
-        if(self.slots):
-            return True
+    def freeSlot(self, time):
+        for slot in self.slottimes:
+            if(slot >= time):
+                return True
         return False
 
     def __str__(self):
@@ -385,6 +395,7 @@ class ChargingStation:
         self.y = 0
         self.z = 0
         self.slots = 0
+        self.slottimes = []
         self.current = 0
 
     def set_x(self, x):
@@ -402,9 +413,10 @@ class ChargingStation:
     def set_current(self, current):
         self.current = current
 
-    def freeSlot(self):
-        if(self.slots):
-            return True
+    def freeSlot(self, time):
+        for slot in self.slottimes:
+            if(slot >= time):
+                return True
         return False
 
     def __str__(self):
