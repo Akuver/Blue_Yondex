@@ -238,6 +238,11 @@ class Warehouse:
     def set_current(self, current):
         self.current = current
 
+    def freeSlot(self):
+        if(self.slots):
+            return True
+        return False
+
     def __str__(self):
         summary = []
         str1 = ' '
@@ -396,6 +401,11 @@ class ChargingStation:
 
     def set_current(self, current):
         self.current = current
+
+    def freeSlot(self):
+        if(self.slots):
+            return True
+        return False
 
     def __str__(self):
         summary = []
