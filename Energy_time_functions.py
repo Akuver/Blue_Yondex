@@ -210,6 +210,14 @@ def find_path(droneId, packageID, global_time):
     tim = 0  # in seconds assuming it 1hr just plug appropriate function here
     battery = drones[droneId].battery  # current mAh of battery of the drone
     drone_cord = [drones[droneId].x, drones[droneId].y, drones[droneId].z]
+    if(packageID == 0):
+        # send to warehouse
+        z = totalEnergyTime(
+            drone_cord, [0, 0, 0], drones[droneId].weight, 0, droneId)
+        write_to_file('DronePath.csv', [
+            drone_cord, 0, 0, global_time+tim, 0], [droneId, packageID, 1, 0, 1])
+        tim += z[1]
+        pass
     pickup_cord = [warehouses[demands[packageID].WarehouseID].x, warehouses[demands[packageID].WarehouseID].y,
                    warehouses[demands[packageID].WarehouseID].z]
     drop_cord = [demands[packageID].x,

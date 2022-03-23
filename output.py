@@ -75,6 +75,9 @@ for i in range(1, len(demands)):
             cost_report(demand.Day, [j, drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
             global_time = data[0]
+            data = find_path(j, 0, global_time)
+            energy_time(drone_cord, [0, 0, 0],
+                        weight, j, [j, i, 1, 0, 1])
 
         elif(len(data) == 5):
             # has to recharge itself in between
@@ -93,5 +96,9 @@ for i in range(1, len(demands)):
             cost_report(demand.Day, [j, drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
             global_time = data[0]
+            data = find_path(j, 0, global_time)
+            energy_time(drone_cord, [0, 0, 0],
+                        weight, j, [j, i, 1, 0, 1])
+
 
 #cost_report(1, [1, 2, 3, 4, 5, 6])
