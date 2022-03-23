@@ -290,6 +290,9 @@ class Drone:
         self.availabletime = 0
         self.flighttime = 0
         self.chargetime = 0
+        self.currenttime = 0
+        self.energyused = 0
+        self.resttime = 0
         self.used = 0
 
     def set_A(self, A):
@@ -360,6 +363,15 @@ class Drone:
 
     def set_chargetime(self, chargetime):
         self.chargetime = chargetime
+
+    def set_currenttime(self, currenttime):
+        self.currenttime = currenttime
+
+    def set_energyused(self, energyused):
+        self.energyused = energyused
+
+    def set_resttime(self, restttime):
+        self.resttime = restttime
 
     def __str__(self):
         summary = []
