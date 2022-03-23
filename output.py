@@ -53,9 +53,9 @@ for demand in demands:
             weight = -1
             # write data to DronePath.csv
             energy_time(drone_cord, pickup_cord, speed,
-                        weight, [drone.ID, demand.ID, 1, 0])
+                        weight, [drone.ID, demand.ID, 1, 0, 1])
             energy_time(pickup_cord, drop_cord, speed,
-                        weight, [drone.ID, demand.ID, 1, 1])
+                        weight, [drone.ID, demand.ID, 1, 1, 1])
             # write data to CostReport.csv
             cost_report(demand.Day, [drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
@@ -68,11 +68,12 @@ for demand in demands:
             weight = -1
             # write data to DronePath.csv
             energy_time(drone_cord, pickup_cord, speed,
-                        weight, [drone.ID, demand.ID, 0])
+                        weight, [drone.ID, demand.ID, 0, 1])
             energy_time(pickup_cord, halt_cord, speed,
-                        weight, [drone.ID, demand.ID, 1])
+                        weight, [drone.ID, demand.ID, 1, 1])
+
             energy_time(halt_cord, drop_cord, speed,
-                        weight, [drone.ID, demand.ID, 1])
+                        weight, [drone.ID, demand.ID, 1, 1])
             # write data to CostReport.csv
             cost_report(demand.Day, [drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
