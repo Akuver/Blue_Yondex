@@ -24,24 +24,37 @@ def cost_report(day, data):
     report_list = []
 
     # Read all data from the csv file.
-    with open(CostReport, 'rb') as b:
+    with open(CostReport, 'r') as b:
         d = csv.reader(b)
         report_list.extend(d)
 
     # Write data to the csv file and replace the lines in the line_to_override dict.
-    with open('a.csv', 'wb') as b:
+    found = 0
+    new_row = None
+    with open(CostReport, 'w') as b:
         writer = csv.writer(b)
         for line, row in enumerate(report_list):
-            d = []
-            for col in range(day, len(report_list[0]), 3):
-                d.append(data[0])
-                data.pop(0)
-            writer.writerow(d)
+            new_row = row
+            if(row[0] == data[0]):
+                for col in range(day, len(report_list[0])-1, 3):
+                    row[col] = data[1]
+                    data.pop(1)
+                found = 1
+            writer.writerow(row)
+
+        if(not found):
+            for col in range(0, len(new_row)):
+                new_row[col] = '-'
+            new_row[0] = str('D'+str(data[0]))
+            for col in range(day, len(new_row)-1, 3):
+                new_row[col] = data[1]
+                data.pop(1)
+        writer.writerow(new_row)
 
 
 for demand in demands:
     for drone in drones:
-        if(drone[0] == '#' or demand[0] == '#'):
+        if(drone.ID == -1 or demand.ID == -1):
             continue
         data = find_path(drone.ID, demand.ID)
         if(len(data) == 0):
@@ -77,5 +90,7 @@ for demand in demands:
             energy_time(halt_cord, drop_cord, speed,
                         weight, [drone.ID, demand.ID, 1, 1, 1])
             # write data to CostReport.csv
-            cost_report(demand.Day, [drone.flighttime, drone.resttime,
+            cost_report(demand.Day, [drone.ID, drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
+
+#cost_report(1, [1, 2, 3, 4, 5, 6])
