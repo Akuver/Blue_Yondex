@@ -1,8 +1,9 @@
 import csv
+from sys import is_finalizing
 from read import demands, warehouses, drones, noflyzones, items, chargingstations, M, C
 from read import Demand, Warehouse, Drone, NoFlyZone, Item, ChargingStation
 
-data = []
+data_old = []
 
 
 def write_to_file(f, data, extradata):
@@ -10,6 +11,10 @@ def write_to_file(f, data, extradata):
     # extradata=[droneID,demandID,warehouseID,activityinfo,data_collect]
     with open(f, 'a+', newline='') as file:
         writer = csv.writer(file)
+        if(extradata[-1] == 2):
+            for row in data_old:
+                writer.writerow(row)
+            return
         activity = ''
         cwh = '-'
         if(extradata[-2] == 0):
@@ -41,8 +46,8 @@ def write_to_file(f, data, extradata):
             writer.writerow([extradata[0], demands[extradata[1]-1].Day, data[3], data[0][0], data[0][1], data[0]
                              [2], activity, items[demands[extradata[1]-1].Item-1].weight, abs(data[1]), data[4], cwh])
         else:
-            data.append([extradata[0], demands[extradata[1]-1].Day, data[3], data[0][0], data[0][1], data[0]
-                         [2], activity, items[demands[extradata[1]-1].Item-1].weight, abs(data[1]), data[4], cwh])
+            data_old.append([extradata[0], demands[extradata[1]-1].Day, data[3], data[0][0], data[0][1], data[0]
+                             [2], activity, items[demands[extradata[1]-1].Item-1].weight, abs(data[1]), data[4], cwh])
 
 
 def totalEnergyTime(f, s, w, charge):
@@ -146,14 +151,12 @@ def isStationFree(t, stationId):
 
 def timeTorechargeFull(droneID, warehouseID, write=[]):
     # write=[currenttime]
-    droneID -= 1
-    warehouseID -= 1
     charge_needed = drones[droneID].fullbattery - drones[droneID].battery
     time = (charge_needed / (warehouses[warehouseID].current * 1000)) * 3600
     if(len(write)):
         for i in range(time):
             write_to_file('DronePath.csv', [[drones[droneID].x, drones[droneID].y, drones[droneID].z], drones[droneID].speed, 0, write[0], 0], [
-                droneID, 0, warehouseID, 2])
+                droneID, 0, warehouseID, 8, 0])
     return time
 
 
@@ -167,22 +170,24 @@ def find_path(droneId, packageID):  # parameters will be drone and pacakge objec
     tim = 0  # in seconds assuming it 1hr just plug appropriate function here
     battery = 10000  # current mAh of battery of the drone
     drone_cord = [drones[droneId].x, drones[droneId].y, drones[droneId].z]
-    pickup_cord = [warehouses[demands[packageID].WarehouseID-1].x,
-                   warehouses[demands[packageID].WarehouseID-1].y, warehouses[demands[packageID].WarehouseID-1].z]
+    pickup_cord = [warehouses[demands[packageID].WarehouseID].x,
+                   warehouses[demands[packageID].WarehouseID].y, warehouses[demands[packageID].WarehouseID].z]
     drop_cord = [demands[packageID].x,
                  demands[packageID].y, demands[packageID].z]
     drone_weight = 0  # empty drone weight
-    package_weight = items[demands[packageID].Item-1].weight
-    write_to_file('DroneReport.csv', [], [0, 0])
+    package_weight = items[demands[packageID].Item].weight
+    write_to_file('DroneReport.csv', [
+                  drone_cord, -1, 0, global_time, 0], [droneId, packageID, demands[packageID].WarehouseID, 2, 0])
     z = totalEnergyTime(drone_cord, pickup_cord, drone_weight,
                         1)  # '1' since pickup point is charge station and we can charge there
     tim += z[1]
     # assuming at full charge we can travel between two warehouse
     battery -= z[0]
-    write_to_file('DroneReport.csv', [], [0, 0])
     z = totalEnergyTime(pickup_cord, drop_cord,
                         drone_weight + package_weight, 0)
     if 2 * z[0] <= battery:
+        # write the data
+        data_old.clear()
         return [tim, drone_cord, pickup_cord, drop_cord]
     # no capable of direct delivery
     # choose nearest chargepoint/ ware house which is free
@@ -202,26 +207,28 @@ def find_path(droneId, packageID):  # parameters will be drone and pacakge objec
                 for j in station_cord:
                     halt_cord.append(j)
     if len(halt_cord) == 0:
+        data_old.clear()
         return []
-    write_to_file('DroneReport.csv', [], [0, 0])
     z = totalEnergyTime(pickup_cord, halt_cord,
                         drone_weight + package_weight, 1)
     battery -= z[0]
     tim += z[0]
     if battery < 0:
+        data_old.clear()
         return []
 
     ########################
-    write_to_file('DroneReport.csv', data, [0, 1])
-    data.clear()
-    write_to_file(timeTorechargeFull(droneId, haltid.ID, [tim]))
+    timeTorechargeFull(droneId, haltid.ID, [tim])
     tim += timeTorechargeFull(droneId, haltid.ID)  # need fixing
     ########################
     z = totalEnergyTime(halt_cord, drop_cord, drone_weight + package_weight, 0)
     if battery < 2 * z[0]:
+        data_old.clear()
         return []
     battery -= z[0]
     tim += z[1]
+    write_to_file('DronePath.csv', data_old, [2])
+    data_old.clear()
     return [tim, drone_cord, pickup_cord, halt_cord, drop_cord]
 
 
@@ -240,4 +247,4 @@ curr = [0, 0, 0]  # assume always start from ware house 1
 s = 5  # for all scenario irrespective of f and p and q
 a = b = c = 0  # for fuel calculation
 
-#find_path(2, 1)
+# find_path(2, 1)
