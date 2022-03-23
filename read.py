@@ -104,9 +104,19 @@ def filter(row):
     elif(row['Parameter_ID'][0] == 'Q'):
         obj.set_Q(value)
     elif(row['Parameter_ID'][0] == 'A'):
-        obj.set_A(value)
+        if(row['Parameter_ID'][1] == 'X'):
+            obj.set_x(value)
+        elif(row['Parameter_ID'][1] == 'Y'):
+            obj.set_y(value)
+        else:
+            obj.set_A(value)
     elif(row['Parameter_ID'][0] == 'B'):
-        obj.set_B(value)
+        if(row['Parameter_ID'][1] == 'X'):
+            obj.set_x(value)
+        elif(row['Parameter_ID'][1] == 'Y'):
+            obj.set_y(value)
+        else:
+            obj.set_B(value)
     elif(row['Parameter_ID'][0] == 'C'):
         obj.set_C(value)
     elif(row['Parameter_ID'].startswith('DT')):
@@ -116,11 +126,11 @@ def filter(row):
     elif(row['Parameter_ID'].endswith('Y1')):
         obj.set_y(value)
     elif(row['Parameter_ID'].startswith('X')):
-        setvalue(obj, 'X', int(row['ParameterID'][-1]), value)
+        setvalue(obj, 'X', int(row['Parameter_ID'][-1]), value)
     elif(row['Parameter_ID'].startswith('Y')):
-        setvalue(obj, 'Y', int(row['ParameterID'][-1]), value)
+        setvalue(obj, 'Y', int(row['Parameter_ID'][-1]), value)
     elif(row['Parameter_ID'].startswith('Z')):
-        setvalue(obj, 'Z', int(row['ParameterID'][-1]), value)
+        setvalue(obj, 'Z', int(row['Parameter_ID'][-1]), value)
 
     if(row['Type'].startswith('Drone')):
         if(flag):
