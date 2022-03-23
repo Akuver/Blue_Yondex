@@ -52,11 +52,12 @@ def cost_report(day, data):
         writer.writerow(new_row)
 
 
+global_time = 0
 for demand in demands:
     for drone in drones:
         if(drone.ID == -1 or demand.ID == -1):
             continue
-        data = find_path(drone.ID, demand.ID)
+        data = find_path(drone.ID, demand.ID, global_time)
         if(len(data) == 0):
             # this combination of drone & demand is not possible
             continue
@@ -74,6 +75,7 @@ for demand in demands:
             # write data to CostReport.csv
             cost_report(demand.Day, [drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
+            global_time = data[0]
 
         elif(len(data) == 5):
             # has to recharge itself in between
@@ -92,5 +94,6 @@ for demand in demands:
             # write data to CostReport.csv
             cost_report(demand.Day, [drone.ID, drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
+            global_time = data[0]
 
 #cost_report(1, [1, 2, 3, 4, 5, 6])

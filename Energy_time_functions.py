@@ -50,7 +50,7 @@ def write_to_file(f, data, extradata):
 
 
 def speed(w, droneID, typ):
-    f = (drones[droneID].weight + w) / drones[droneID].capacity
+    f = (drones[droneID].weight + w) / drones[droneID].fullcapacity
     if typ == 0:  # xy
         return M - f * drones[droneID].P
     if typ == 1:  # up
