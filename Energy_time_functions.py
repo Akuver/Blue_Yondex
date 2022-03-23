@@ -42,15 +42,15 @@ def write_to_file(f, data, extradata):
             activity = 'C-RS'
             activity += str(extradata[2])
         if(extradata[-1] == 1):
-            writer.writerow([extradata[0], demands[extradata[1]-1].Day, data[3], data[0][0], data[0][1], data[0]
-                             [2], activity, items[demands[extradata[1]-1].Item-1].weight, abs(data[1]), data[4], cwh])
+            writer.writerow([extradata[0], demands[extradata[1]].Day, data[3], data[0][0], data[0][1], data[0]
+                             [2], activity, items[demands[extradata[1]].Item].weight, abs(data[1]), data[4], cwh])
         else:
-            data_old.append([extradata[0], demands[extradata[1]-1].Day, data[3], data[0][0], data[0][1], data[0]
-                             [2], activity, items[demands[extradata[1]-1].Item-1].weight, abs(data[1]), data[4], cwh])
+            data_old.append([extradata[0], demands[extradata[1]].Day, data[3], data[0][0], data[0][1], data[0]
+                             [2], activity, items[demands[extradata[1]].Item].weight, abs(data[1]), data[4], cwh])
 
 
 def speed(w, droneID, typ):
-    f = (drones[droneID].weight + w) / drones[droneID].fullcapacity
+    f = (drones[droneID].weight + w) / 1  # drones[droneID].fullcapacity
     if typ == 0:  # xy
         return M - f * drones[droneID].P
     if typ == 1:  # up
@@ -208,7 +208,7 @@ def find_path(droneId, packageID, global_time):
     drop_cord = [demands[packageID].x,
                  demands[packageID].y, demands[packageID].z]
     drone_weight = 0  # empty drone weight
-    package_weight = items[demands[packageID].Item]
+    package_weight = items[demands[packageID].Item].weight
     write_to_file('DroneReport.csv', [
                   drone_cord, -1, 0, global_time, 0], [droneId, packageID, demands[packageID].WarehouseID, 2, 0])
     z = totalEnergyTime(drone_cord, pickup_cord, drone_weight,

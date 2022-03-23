@@ -1,7 +1,7 @@
 import csv
 from read import demands, warehouses, drones, noflyzones, items, chargingstations, M, C
 from read import Demand, Warehouse, Drone, NoFlyZone, Item, ChargingStation
-from Energy_time_functions import totalEnergyTime, inZone, escape, energy_time, isStationFree, timeTorechargeFull, find_path
+from Energy_time_functions import totalEnergyTime, inZone, escape, energy_time, isStationFree, timeTorechargeFull, find_path, speed
 
 MAX_TIME = 24*60*60
 DronePath = 'DronePath.csv'
@@ -53,46 +53,46 @@ def cost_report(day, data):
 
 
 global_time = 0
-for demand in demands:
-    for drone in drones:
+for i in range(len(demands)):
+    for j in range(len(drones)):
+        drone = drones[j]
+        demand = demands[i]
         if(drone.ID == -1 or demand.ID == -1):
             continue
-        data = find_path(drone.ID, demand.ID, global_time)
+        data = find_path(j, i, global_time)
         if(len(data) == 0):
             # this combination of drone & demand is not possible
             continue
         elif(len(data) == 4):
             # doesn't need to recharge itself
-            time_taken = data[0], drone_cord = data[1], pickup_cord = data[2], drop_cord = data[3]
-            # get speed & weight of drone
-            speed = -1
-            weight = -1
+            time_taken, drone_cord, pickup_cord, drop_cord = data
+            # get weight of drone
+            weight = items[demand.Item].weight
             # write data to DronePath.csv
-            energy_time(drone_cord, pickup_cord, speed,
-                        weight, [drone.ID, demand.ID, 1, 0, 1])
-            energy_time(pickup_cord, drop_cord, speed,
-                        weight, [drone.ID, demand.ID, 1, 1, 1])
+            energy_time(drone_cord, pickup_cord,
+                        weight, j, [j, i, 1, 0, 1])
+            energy_time(pickup_cord, drop_cord,
+                        weight, j, [j, i, 1, 1, 1])
             # write data to CostReport.csv
-            cost_report(demand.Day, [drone.flighttime, drone.resttime,
+            cost_report(demand.Day, [j, drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
             global_time = data[0]
 
         elif(len(data) == 5):
             # has to recharge itself in between
-            time_taken = data[0], drone_cord = data[1], pickup_cord = data[2], halt_cord = data[3], drop_cord = data[4]
-            # get speed & weight of drone
-            speed = -1
-            weight = -1
+            time_taken, drone_cord, pickup_cord, halt_cord, drop_cord = data
+            # get weight of drone
+            weight = items[demand.Item].weight
             # write data to DronePath.csv
-            energy_time(drone_cord, pickup_cord, speed,
-                        weight, [drone.ID, demand.ID, 0, 1, 1])
-            energy_time(pickup_cord, halt_cord, speed,
-                        weight, [drone.ID, demand.ID, 1, 1, 1])
+            energy_time(drone_cord, pickup_cord,
+                        weight, j, [j, i, 0, 1, 1])
+            energy_time(pickup_cord, halt_cord,
+                        weight, j, [j, i, 1, 1, 1])
 
-            energy_time(halt_cord, drop_cord, speed,
-                        weight, [drone.ID, demand.ID, 1, 1, 1])
+            energy_time(halt_cord, drop_cord,
+                        weight, j, [j, i, 1, 1, 1])
             # write data to CostReport.csv
-            cost_report(demand.Day, [drone.ID, drone.flighttime, drone.resttime,
+            cost_report(demand.Day, [j, drone.flighttime, drone.resttime,
                         drone.chargetime, drone.variablecost, drone.energyused*C])
             global_time = data[0]
 
