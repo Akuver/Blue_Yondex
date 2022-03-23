@@ -1,7 +1,7 @@
 import csv
 from read import demands, warehouses, drones, noflyzones, items, chargingstations, M, C
 from read import Demand, Warehouse, Drone, NoFlyZone, Item, ChargingStation
-from Energy_time_functions import totalEnergyTime, inZone, escape, energy_time, isStationFree, timeTorechargeFull, find_path, speed
+from Energy_time_functions import totalEnergyTime, inZone, escape, energy_time, isStationFree, timeTorechargeFull, find_path, speed, write_to_file
 
 MAX_TIME = 24*60*60
 DronePath = 'DronePath.csv'
@@ -99,6 +99,10 @@ for i in range(1, len(demands)):
             data = find_path(j, 0, global_time)
             energy_time(drone_cord, [0, 0, 0],
                         weight, j, [j, i, 1, 0, 1])
+        if(global_time >= 86400):
+            for j in range(1, len(drones)):
+                write_to_file(DronePath, [
+                              [drones[j].x, drones[j].y, drones[j].z], 0, 0, global_time, 0], [j, 0, 1, 7, 1])
 
 
 #cost_report(1, [1, 2, 3, 4, 5, 6])
