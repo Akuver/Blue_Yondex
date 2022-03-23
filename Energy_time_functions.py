@@ -1,8 +1,12 @@
 import csv
+from multiprocessing.connection import wait
 from read import demands, warehouses, drones, noflyzones, items, chargingstations, M, C
 from read import Demand, Warehouse, Drone, NoFlyZone, Item, ChargingStation
 
 data_old = []
+waiting_time_delivery = 3*60
+waiting_time_pickup = 3*60
+GLOBAL_TIME = 0
 
 
 def write_to_file(f, data, extradata):
@@ -50,7 +54,9 @@ def write_to_file(f, data, extradata):
 
 
 def speed(w, droneID, typ):
-    f = (drones[droneID].weight + w) / 1  # drones[droneID].fullcapacity
+    if(droneID == 0):
+        return 0
+    f = (drones[droneID].weight + w) / drones[droneID].fullcapacity
     if typ == 0:  # xy
         return M - f * drones[droneID].P
     if typ == 1:  # up
@@ -148,7 +154,7 @@ def energy_time(start, end, w, droneID, write=[]):
                 # change to lower speed "step" and reach exactly at desired point in this second
                 f[i] = s[i]
             total += w * (drones[droneID].A + drones[droneID].B * step)
-            data = [f, now_speed, i, tim, w *
+            data = [f, now_speed, i, tim+GLOBAL_TIME, w *
                     (drones[droneID].A + drones[droneID].B * step)]
             if i == 2:
                 total += (drones[droneID].C * step)
@@ -195,6 +201,7 @@ def engageRechargeStation(stationId, start_time, end_time):
 
 # parameters will be drone and pacakge objects
 def find_path(droneId, packageID, global_time):
+    GLOBAL_TIME = global_time
     # given drone and package find min total time and corresponding fuel
     # get drone to pickup location time and fuel
     # fully charge the drone assuming it is at warehouse
@@ -214,6 +221,9 @@ def find_path(droneId, packageID, global_time):
     z = totalEnergyTime(drone_cord, pickup_cord, drone_weight,
                         1, droneId)  # '1' since pickup point is charge station and we can charge there
     tim += z[1]
+    for i in range(waiting_time_delivery):
+        write_to_file('DronePath.csv', [
+            pickup_cord, 0, 0, global_time+tim+i+1, 0], [droneId, packageID, 1, 3, 0])
     # assuming at full charge we can travel between two warehouse
     battery -= z[0]
     z = totalEnergyTime(pickup_cord, drop_cord,
@@ -221,6 +231,16 @@ def find_path(droneId, packageID, global_time):
     if z[0] <= battery:
         write_to_file('DronePath.csv', data_old, [2])
         data_old.clear()
+        # waiting at delivery point
+        for i in range(waiting_time_delivery):
+            write_to_file('DronePath.csv', [
+                pickup_cord, 0, 0, global_time+tim+i+1, 0], [droneId, packageID, 1, 6, 1])
+        # set drone flighttime & batteryusage
+        drones[droneId].set_flighttime(tim)
+        drones[droneId].set_resttime(waiting_time_delivery+waiting_time_pickup)
+        drones[droneId].set_chargetime(drones[droneId].resttime)
+        drones[droneId].set_energyused(
+            2*drones[droneId].battery-drones[droneId].fullbattery)
         return [tim, drone_cord, pickup_cord, drop_cord]
     # no capable of direct delivery
     # choose nearest chargepoint/ ware house which is free
@@ -283,8 +303,18 @@ def find_path(droneId, packageID, global_time):
     tim += z[1]
     write_to_file('DronePath.csv', data_old, [2])
     data_old.clear()
+    # waiting at delivery point
+    for i in range(waiting_time_delivery):
+        write_to_file('DronePath.csv', [
+            pickup_cord, 0, 0, global_time+tim+i+1, 0], [droneId, packageID, 1, 6, 1])
     engageRechargeStation(haltid, start_charge_time, end_charge_time)
-    return [tim, drone_cord, pickup_cord, halt_cord, drop_cord]
+    # set drone flight time
+    drones[droneId].set_flighttime(tim)
+    drones[droneId].set_resttime(waiting_time_delivery+waiting_time_pickup)
+    drones[droneId].set_chargetime(drones[droneId].resttime)
+    drones[droneId].set_energyused(
+        2*drones[droneId].battery-drones[droneId].fullbattery)
+    return [tim+waiting_time_delivery+waiting_time_pickup, drone_cord, pickup_cord, halt_cord, drop_cord]
 
 
 zones = []  # zone[i][axis][point 1..8]

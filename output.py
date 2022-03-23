@@ -53,12 +53,10 @@ def cost_report(day, data):
 
 
 global_time = 0
-for i in range(len(demands)):
-    for j in range(len(drones)):
+for i in range(1, len(demands)):
+    for j in range(1, len(drones)):
         drone = drones[j]
         demand = demands[i]
-        if(drone.ID == -1 or demand.ID == -1):
-            continue
         data = find_path(j, i, global_time)
         if(len(data) == 0):
             # this combination of drone & demand is not possible
