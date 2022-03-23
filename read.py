@@ -74,31 +74,31 @@ def filter(row):
     obj = None
     flag = 0
     if(row['Type'].startswith('Drone')):
-        if(len(drones) < ID):
+        if(len(drones) <= ID):
             obj = Drone(ID)
             flag = 1
         else:
-            obj = drones[ID-1]
+            obj = drones[ID]
     elif(row['Type'].startswith('WH')):
         ID = int(row['Parameter_ID'][2:-1])
-        if(len(warehouses) < ID):
+        if(len(warehouses) <= ID):
             obj = Warehouse(ID)
             flag = 1
         else:
-            obj = warehouses[ID-1]
+            obj = warehouses[ID]
     elif(row['Type'].startswith('Recharge')):
-        if(len(chargingstations) < ID):
+        if(len(chargingstations) <= ID):
             obj = ChargingStation(ID)
             flag = 1
         else:
-            obj = chargingstations[ID-1]
+            obj = chargingstations[ID]
     else:
         ID = int(row['Parameter_ID'][1:-1])
-        if(len(noflyzones) < ID):
+        if(len(noflyzones) <= ID):
             obj = NoFlyZone(ID)
             flag = 1
         else:
-            obj = noflyzones[ID-1]
+            obj = noflyzones[ID]
     if(row['Parameter_ID'][0] == 'P'):
         obj.set_P(value)
     elif(row['Parameter_ID'][0] == 'Q'):
@@ -126,22 +126,22 @@ def filter(row):
         if(flag):
             drones.append(obj)
         else:
-            drones[ID-1] = obj
+            drones[ID] = obj
     elif(row['Type'].startswith('WH')):
         if(flag):
             warehouses.append(obj)
         else:
-            warehouses[ID-1] = obj
+            warehouses[ID] = obj
     elif(row['Type'].startswith('Recharge')):
         if(flag):
             chargingstations.append(obj)
         else:
-            chargingstations[ID-1] = obj
+            chargingstations[ID] = obj
     else:
         if(flag):
             noflyzones.append(obj)
         else:
-            noflyzones[ID-1] = obj
+            noflyzones[ID] = obj
 
 
 def convert_to_seconds(time):
@@ -574,6 +574,13 @@ class NoFlyZone:
         return str1.join(summary)
 
 
+demands.append(Demand(-1, -1, -1, -1, -1, -1, -1, "00:00:00", "00:00:00", -1))
+items.append(Item(-1, -1, -1, -1, -1))
+warehouses.append(Warehouse(-1))
+drones.append(Drone(-1))
+noflyzones.append(NoFlyZone(-1))
+chargingstations.append(ChargingStation(-1))
+
 data = pd.read_csv('Demand.csv')
 for index, row in data.iterrows():
     ID = int(row['Demand ID'][1:])
@@ -612,45 +619,43 @@ data = pd.read_csv('Drones.csv')
 
 for index, row in data.iterrows():
     ID = int(row['Drone Type'][-1])
-    drones[ID-1].set_fullbattery(int(row['Battery Capacity']))
-    drones[ID-1].set_battery(int(row['Battery Capacity']))
-    drones[ID-1].set_weight(int(row['Base Weight']))
-    drones[ID-1].set_fullslots(int(row['Max Slots']))
-    drones[ID-1].set_slots(0)
-    drones[ID-1].set_fullcapacity(int(row['Payload Capacity (KG)']))
-    drones[ID-1].set_capacity(0)
-    drones[ID-1].set_fullcapacityvol(int(row['Payload Capacity (cu.cm)']))
-    drones[ID-1].set_capacityvol(0)
+    drones[ID].set_fullbattery(int(row['Battery Capacity']))
+    drones[ID].set_battery(int(row['Battery Capacity']))
+    drones[ID].set_weight(int(row['Base Weight']))
+    drones[ID].set_fullslots(int(row['Max Slots']))
+    drones[ID].set_slots(0)
+    drones[ID].set_fullcapacity(int(row['Payload Capacity (KG)']))
+    drones[ID].set_capacity(0)
+    drones[ID].set_fullcapacityvol(int(row['Payload Capacity (cu.cm)']))
+    drones[ID].set_capacityvol(0)
 
 data = pd.read_csv('Costs.csv')
 for index, row in data.iterrows():
     ID = int(row['Drone Type'][-1])
-    drones[ID -
-           1].set_fixedcost(int(row['Maintenance Fixed Cost (per day)'][1:]))
-    drones[ID-1].set_variablecost(
+    drones[ID].set_fixedcost(int(row['Maintenance Fixed Cost (per day)'][1:]))
+    drones[ID].set_variablecost(
         int(row['Maintenance Variable Cost (per hour of flight time)'][1:]))
 
 
 data = pd.read_csv('Recharge.csv')
 for index, row in data.iterrows():
     if(row['Station ID'][-1] >= 'A' and row['Station ID'][-1] <= 'Z'):
-        ID = int(ord(row['Station ID'][-1])-ord('A'))
+        ID = int(ord(row['Station ID'][-1])-ord('A'))+1
         if(len(chargingstations) > ID):
-            chargingstations[ID-1].set_slots(int(row['Charging Slots']))
-            chargingstations[ID -
-                             1].set_current(int(row['Charging Current'][:-2]))
+            chargingstations[ID].set_slots(int(row['Charging Slots']))
+            chargingstations[ID].set_current(int(row['Charging Current'][:-2]))
         continue
     ID = int(row['Station ID'][-1])
-    if(ID >= 1 and ID <= 9 and len(warehouses) >= ID):
+    if(ID >= 1 and ID <= 9 and len(warehouses) > ID):
         if(row['Charging Slots'] != '∞'):
-            warehouses[ID-1].set_slots(int(row['Charging Slots']))
+            warehouses[ID].set_slots(int(row['Charging Slots']))
         else:
-            warehouses[ID-1].set_slots(MAX_SLOTS)
-        warehouses[ID-1].set_current(int(row['Charging Current'][:-2]))
+            warehouses[ID].set_slots(MAX_SLOTS)
+        warehouses[ID].set_current(int(row['Charging Current'][:-2]))
 
 for key, value in dronecounts.items():
     for i in range(int(value-1)):
-        drones.append(drones[key-1])
+        drones.append(drones[key])
 
 # for drone in drones:
 #     print(drone)

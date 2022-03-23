@@ -1,6 +1,5 @@
 from math import sqrt
 import random
-
 from numpy import append
 from read import demands, warehouses, drones, noflyzones, items, chargingstations, M, C
 from read import Demand, Warehouse, Drone, NoFlyZone, Item, ChargingStation
@@ -21,7 +20,7 @@ def random_demands(leng):
 
 
 def possible(demand, drone):
-    item = items[demand.Item-1]
+    item = items[demand.Item]
     drone.set_capacity(drone.capacity+item.weight)
     drone.set_capacityvol(
         drone.capacityvol+item.L*item.B*item.H)
@@ -42,15 +41,15 @@ def possible(demand, drone):
     # print(time_taken+minimum, energy_consumed)
     if(energy_consumed <= drone.battery and drone.availabletime <= demand.startTime and drone.capacity <= drone.fullcapacity and drone.capacityvol <= drone.fullcapacityvol):
         drone.set_battery(drone.battery-energy_consumed)
-        drone.set_capacity(drone.capacity-items[demand.Item-1].weight)
+        drone.set_capacity(drone.capacity-items[demand.Item].weight)
         drone.set_capacityvol(
-            drone.capacityvol-items[demand.Item-1].L*items[demand.Item-1].B*items[demand.Item-1].H)
+            drone.capacityvol-items[demand.Item].L*items[demand.Item].B*items[demand.Item].H)
         drone.set_availabletime(time_taken+minimum +
                                 time_to_charge(drone.ID, warehouseID))
         drone.set_used(1)
-        drone.set_z(warehouses[warehouseID-1].z)
-        drones[drone.ID-1].flighttime += time_taken+minimum
-        drones[drone.ID-1].chargetime += time_to_charge(drone.ID, warehouseID)
+        drone.set_z(warehouses[warehouseID].z)
+        drones[drone.ID].flighttime += time_taken+minimum
+        drones[drone.ID].chargetime += time_to_charge(drone.ID, warehouseID)
         return True
     return False
 
@@ -65,15 +64,12 @@ def time(x1, y1, z1, x2, y2, z2, pf=0, qf=0):
 
 
 def time_to_charge(droneID, warehouseID):
-    droneID -= 1
-    warehouseID -= 1
     charge_needed = drones[droneID].fullbattery-drones[droneID].battery
     time = (charge_needed/(warehouses[warehouseID].current*1000))*3600
     return time
 
 
 def battery_consumed(droneID, time, is_ascending):
-    droneID -= 1
     total_weight = drones[droneID].weight+drones[droneID].capacity
     multiplier = drones[droneID].A+drones[droneID].B * \
         M+(drones[droneID].z*is_ascending)
@@ -89,7 +85,7 @@ def check_demands(dems, drone):
 
     for d in dems:
         dem = demands[d]
-        item = items[dem.Item-1]
+        item = items[dem.Item]
         total_capacity_w += item.weight
         total_capacity_vol += item.L*item.B*item.H
         max_height = max(max_height, item.H)
@@ -106,7 +102,7 @@ def check_demands(dems, drone):
             dem = demands[d]
             if(drone.currenttime > dem.endTime):
                 done = 1
-            item = items[dem.Item-1]
+            item = items[dem.Item]
             time_taken = time(drone.x, drone.y, drone.z,
                               demands[d].x, demands[d].y, demands[d].z, drone.P*(drone.capacity/drone.fullcapacity), drone.Q*(drone.capacity/drone.fullcapacity))
             minimum = 1e18
@@ -135,7 +131,7 @@ def check_demands(dems, drone):
             drone.set_capacityvol(0)
             return order
         else:
-            item = items[demands[paths[0][1]].Item-1]
+            item = items[demands[paths[0][1]].Item]
             dem = demands[paths[0][1]]
             drone.set_battery(
                 drone.battery-battery_consumed(drone.ID, paths[0][0]-paths[0][2], 1))
@@ -174,13 +170,13 @@ def check_demands(dems, drone):
 
 
 # ALGORITHM 1
-cur_time = 0
-while(cur_time < 86400):
-    for demand in demands:
-        for drone in drones:
-            if(possible(demand, drone)):
-                print("Demand->", demand.ID, "Drone->", drone.ID)
-                break
+for demand in demands:
+    for drone in drones:
+        if(drone.ID == -1 or demand.ID == -1):
+            continue
+        if(possible(demand, drone)):
+            print("Demand->", demand.ID, "Drone->", drone.ID)
+            break
 
 drone_cnt = 0
 total_cost = 0
@@ -188,7 +184,7 @@ for drone in drones:
     total_cost += drone.fixedcost+drone.variablecost * \
         (drone.flighttime/3600)+(drone.chargetime/3600)*C
     drone_cnt += drone.used
-
+print(drone_cnt, total_cost)
 
 # ALGORITHM 2
 # while(len(completed_demands) != len(demands)):

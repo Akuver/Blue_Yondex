@@ -41,6 +41,8 @@ def cost_report(day, data):
 
 for demand in demands:
     for drone in drones:
+        if(drone[0] == '#' or demand[0] == '#'):
+            continue
         data = find_path(drone.ID, demand.ID)
         if(len(data) == 0):
             # this combination of drone & demand is not possible
